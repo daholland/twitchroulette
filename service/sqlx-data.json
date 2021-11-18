@@ -1,0 +1,103 @@
+{
+  "db": "PostgreSQL",
+  "6f566fc83813cbd2d2b7b0ced68436de743a6552ee6a74c7ea7d2cfb5e767470": {
+    "query": "\n        select * from tags order by name\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "id",
+          "type_info": "Uuid"
+        },
+        {
+          "ordinal": 1,
+          "name": "is_language_tag",
+          "type_info": "Bool"
+        },
+        {
+          "ordinal": 2,
+          "name": "localized_name",
+          "type_info": "Varchar"
+        },
+        {
+          "ordinal": 3,
+          "name": "name",
+          "type_info": "Varchar"
+        }
+      ],
+      "parameters": {
+        "Left": []
+      },
+      "nullable": [
+        false,
+        false,
+        false,
+        false
+      ]
+    }
+  },
+  "73f950521caa6f9cfc9a6ab5f098ad8d253480eb3d4afdb2bbe11128cf025158": {
+    "query": "\n        insert into streams (id, title, preview_image, broadcaster, game, tags, stream_type)\n        values ($1, $2, $3, $4, $5, $6::uuid[], $7)\n        on conflict (id) do update\n        set\n            title=excluded.title,\n            preview_image=excluded.preview_image,\n            game=excluded.game,\n            tags=excluded.tags::uuid[],\n            stream_type=excluded.stream_type;\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar",
+          "Varchar",
+          "Int8",
+          "Int8",
+          "UuidArray",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "b6d47068ecf3d8c049075517d5fc43c43256817df37e8710ef101b54a59b660f": {
+    "query": "\n        insert into games (id, name, display, boxart)\n        values ($1, $2, $3, $4)\n        on conflict (id)\n        do nothing;\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "c6e7e06be1f84e822627f782697d18fcc628a16881a8ae60ad208ff4446f48c3": {
+    "query": "\n        insert into broadcasters (id, login, display_name, profile_image, color)\n        values ($1, $2, $3, $4, $5)\n        on conflict (id)\n        do nothing;\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Int8",
+          "Varchar",
+          "Varchar",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  },
+  "f4f970a4d2ddb9d69b32a9791ec1c1c7884606393467c692ad89e7ee0fe9fb84": {
+    "query": "\n        insert into tags (id, is_language_tag, localized_name, name)\n        values ($1, $2, $3, $4)\n        on conflict (id)\n        do nothing;\n        ",
+    "describe": {
+      "columns": [],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Bool",
+          "Varchar",
+          "Varchar"
+        ]
+      },
+      "nullable": []
+    }
+  }
+}
