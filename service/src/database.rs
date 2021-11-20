@@ -342,10 +342,8 @@ pub async fn get_random_stream_from_filters(
         return None;
     }
 
-    {
-        if let Some(stream_id) = stream_id_list_result.choose(&mut rand::thread_rng()) {
-            return get_stream_from_id(pool, stream_id.clone()).await.ok();
-        }
+    if let Some(stream_id) = stream_id_list_result.choose(&mut rand::thread_rng()) {
+        return get_stream_from_id(pool, stream_id.clone()).await.ok();
     }
 
     return None;
