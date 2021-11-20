@@ -29,16 +29,11 @@ message Stream {
   bool online = 6;
 }
 
-message StreamFilter {
-  repeated StreamTag included_tags = 1;
-  repeated StreamTag excluded_tags = 2;
-  repeated StreamGame included_games = 3;
-  repeated StreamGame excluded_games = 4;
-}
-
 message GetRandomStreamRequest {
-  StreamFilter filter = 1;
-  string filter_id = 2;
+  repeated string included_tag_ids = 1;
+  repeated string excluded_tag_ids = 2;
+  repeated string included_game_ids = 3;
+  repeated string excluded_game_ids = 4;
 }
 
 message GetRandomStreamResponse {
@@ -69,3 +64,4 @@ service TwitchRouletteService {
   rpc GetStreamTags(GetStreamTagsRequest) returns (GetStreamTagsResponse) {}
   rpc GetStreamGames(GetStreamGamesRequest) returns (GetStreamGamesResponse) {}
 }
+

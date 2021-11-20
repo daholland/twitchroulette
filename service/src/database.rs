@@ -1,10 +1,9 @@
 use std::fmt;
 
 use anyhow::Result;
-use sqlx::{PgPool, query_as, types::{
-        chrono::{DateTime, Utc},
-        Uuid,
-    }};
+use rand::seq::SliceRandom;
+use sqlx::postgres::PgRow;
+use sqlx::{query_as, types::Uuid, PgPool, Row};
 
 #[derive(Debug, sqlx::FromRow)]
 pub struct Game {
@@ -64,14 +63,6 @@ impl fmt::Display for Stream {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({})", self.id)
     }
-}
-
-#[derive(Debug)]
-pub struct Cursor {
-    id: String,
-    offset: i64,
-    limit: i64,
-    query: Option<String>,
 }
 
 pub async fn get_games(pool: &PgPool) -> Result<Vec<Game>> {
@@ -203,4 +194,159 @@ pub async fn insert_stream(pool: &PgPool, stream: Stream) -> Result<()> {
     .await?;
 
     Ok(())
+}
+
+pub async fn get_stream_from_id(pool: &PgPool, id: i64) -> Result<Stream> {
+    let stream = sqlx::query(
+        r#"
+    select
+        streams.*,
+        games.name as game_name,
+        games.display as game_display,
+        games.boxart as game_boxart,
+        broadcasters.id as broadcaster_id,
+        broadcasters.login as broadcaster_login,
+        broadcasters.display_name as broadcaster_display_name,
+        broadcasters.profile_image as broadcaster_profile_image,
+        broadcasters.color as broadcaster_color,
+    from streams
+    inner join
+        games
+    on
+        streams.game = games.id,
+    inner join
+        broadcasters
+    on
+        streams.broadcaster = broadcasters.id
+    where
+        streams.id = ?
+    "#,
+    )
+    .bind(id)
+    .map(|row: PgRow| {
+        let game_name: &str = row.get("game_name");
+        let game_display: &str = row.get("game_dsplay");
+        let game_id: i64 = row.get("game");
+
+        let game = Game {
+            id: game_id,
+            name: game_name.to_string(),
+            display: game_display.to_string(),
+            boxart: None,
+        };
+
+        let broadcaster_id: i64 = row.get("broadcaster_id");
+        let broadcaster_login: &str = row.get("broadcaster_login");
+        let broadcaster_display_name: &str = row.get("broadcaster_display_name");
+        let broadcaster_profile_image: &str = row.get("broadcaster_profile_image");
+
+        let broadcaster = Broadcaster {
+            id: broadcaster_id,
+            login: broadcaster_login.to_string(),
+            display_name: broadcaster_display_name.to_string(),
+            profile_image: Some(broadcaster_profile_image.to_string()),
+            color: None,
+        };
+
+        let id: i64 = row.get("id");
+        let title: &str = row.get("title");
+        let preview_image: &str = row.get("preview_image");
+
+        Stream {
+            id,
+            title: Some(title.to_string()),
+            preview_image: Some(preview_image.to_string()),
+            tags: vec![],
+            stream_type: None,
+            broadcaster,
+            game,
+        }
+    })
+    .fetch_one(pool)
+    .await?;
+
+    Ok(stream)
+}
+
+pub async fn get_random_stream_from_filters(
+    pool: &PgPool,
+    included_tag_ids: Vec<Uuid>,
+    excluded_tag_ids: Vec<Uuid>,
+    included_game_ids: Vec<i32>,
+    excluded_game_ids: Vec<i32>,
+) -> Option<Stream> {
+    let mut query =
+        "select streams.id from streams where streams.updated_at >= NOW() - INTERVAL '5 minutes'"
+            .to_string();
+
+    if !included_tag_ids.is_empty() {
+        let included_tags: String = included_tag_ids
+            .into_iter()
+            .map(|tag_id| tag_id.to_hyphenated().to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+
+        query = format!("{} and streams.tags @> '{{{}}}'", query, included_tags);
+    }
+
+    if !excluded_tag_ids.is_empty() {
+        let excluded_tags: String = excluded_tag_ids
+            .into_iter()
+            .map(|tag_id| tag_id.to_hyphenated().to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+
+        query = format!("{} and not streams.tags @> '{{{}}}'", query, excluded_tags);
+    }
+
+    if !included_game_ids.is_empty() {
+        let included_games = included_game_ids
+            .into_iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+
+        query = format!(
+            "{} and streams.games = ANY('{{{}}}')",
+            query, included_games
+        );
+    }
+
+    if !excluded_game_ids.is_empty() {
+        let excluded_games = excluded_game_ids
+            .into_iter()
+            .map(|id| id.to_string())
+            .collect::<Vec<String>>()
+            .join(",");
+
+        query = format!(
+            "{} and not streams.games = ANY('{{{}}}')",
+            query, excluded_games
+        );
+    }
+
+    query = format!("{};", query);
+
+    let stream_id_list_result: Vec<i64> = sqlx::query(&query)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default()
+        .into_iter()
+        .map(|row| {
+            let id: i64 = row.get("id");
+            id
+        })
+        .collect();
+
+    if stream_id_list_result.is_empty() {
+        return None;
+    }
+
+    {
+        if let Some(stream_id) = stream_id_list_result.choose(&mut rand::thread_rng()) {
+            return get_stream_from_id(pool, stream_id.clone()).await.ok();
+        }
+    }
+
+    return None;
 }
