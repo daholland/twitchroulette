@@ -208,18 +208,18 @@ pub async fn get_stream_from_id(pool: &PgPool, id: i64) -> Result<Stream> {
         broadcasters.login as broadcaster_login,
         broadcasters.display_name as broadcaster_display_name,
         broadcasters.profile_image as broadcaster_profile_image,
-        broadcasters.color as broadcaster_color,
+        broadcasters.color as broadcaster_color
     from streams
     inner join
         games
     on
-        streams.game = games.id,
+        streams.game = games.id
     inner join
         broadcasters
     on
         streams.broadcaster = broadcasters.id
     where
-        streams.id = ?
+        streams.id = ?;
     "#,
     )
     .bind(id)
@@ -235,6 +235,8 @@ pub async fn get_stream_from_id(pool: &PgPool, id: i64) -> Result<Stream> {
             boxart: None,
         };
 
+        dbg!(&game);
+
         let broadcaster_id: i64 = row.get("broadcaster_id");
         let broadcaster_login: &str = row.get("broadcaster_login");
         let broadcaster_display_name: &str = row.get("broadcaster_display_name");
@@ -248,11 +250,13 @@ pub async fn get_stream_from_id(pool: &PgPool, id: i64) -> Result<Stream> {
             color: None,
         };
 
+        dbg!(&broadcaster);
+
         let id: i64 = row.get("id");
         let title: &str = row.get("title");
         let preview_image: &str = row.get("preview_image");
 
-        Stream {
+        let stream = Stream {
             id,
             title: Some(title.to_string()),
             preview_image: Some(preview_image.to_string()),
@@ -260,10 +264,14 @@ pub async fn get_stream_from_id(pool: &PgPool, id: i64) -> Result<Stream> {
             stream_type: None,
             broadcaster,
             game,
-        }
+        };
+
+        return stream;
     })
     .fetch_one(pool)
     .await?;
+
+    dbg!(&stream);
 
     Ok(stream)
 }
@@ -328,22 +336,24 @@ pub async fn get_random_stream_from_filters(
     query = format!("{};", query);
 
     let stream_id_list_result: Vec<i64> = sqlx::query(&query)
-        .fetch_all(pool)
-        .await
-        .unwrap_or_default()
-        .into_iter()
-        .map(|row| {
+        .map(|row: PgRow| {
             let id: i64 = row.get("id");
             id
         })
-        .collect();
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
 
     if stream_id_list_result.is_empty() {
         return None;
     }
 
-    if let Some(stream_id) = stream_id_list_result.choose(&mut rand::thread_rng()) {
-        return get_stream_from_id(pool, stream_id.clone()).await.ok();
+    let stream_id = stream_id_list_result.choose(&mut rand::thread_rng());
+
+    if let Some(id) = stream_id {
+        dbg!(&id);
+
+        return get_stream_from_id(pool, id.clone()).await.ok();
     }
 
     return None;

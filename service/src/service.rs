@@ -72,34 +72,38 @@ impl TwitchRouletteService for MyTwitchRouletteService {
             included_games,
             excluded_games,
         )
-        .await
-        .unwrap();
+        .await;
 
-        let stream_user = protos::StreamUser {
-            id: db_stream.broadcaster.id.to_string(),
-            display_name: db_stream.broadcaster.display_name,
-            login_name: db_stream.broadcaster.login,
-            image_url: db_stream.broadcaster.profile_image.unwrap_or_default(),
-            ..Default::default()
-        };
+        let stream = match db_stream {
+            Some(db_stream) => {
+                let stream_user = protos::StreamUser {
+                    id: db_stream.broadcaster.id.to_string(),
+                    display_name: db_stream.broadcaster.display_name,
+                    login_name: db_stream.broadcaster.login,
+                    image_url: db_stream.broadcaster.profile_image.unwrap_or_default(),
+                    ..Default::default()
+                };
 
-        let stream_game = protos::StreamGame {
-            id: db_stream.game.id.to_string(),
-            name: db_stream.game.name,
-            image_url: db_stream.game.boxart.unwrap_or_default(),
-            ..Default::default()
-        };
+                let stream_game = protos::StreamGame {
+                    id: db_stream.game.id.to_string(),
+                    name: db_stream.game.name,
+                    image_url: db_stream.game.boxart.unwrap_or_default(),
+                    ..Default::default()
+                };
 
-        let stream = protos::Stream {
-            id: db_stream.id.to_string(),
-            user: Some(stream_user),
-            game: Some(stream_game),
-            title: db_stream.title.unwrap_or_default(),
-            ..Default::default()
+                Some(protos::Stream {
+                    id: db_stream.id.to_string(),
+                    user: Some(stream_user),
+                    game: Some(stream_game),
+                    title: db_stream.title.unwrap_or_default(),
+                    ..Default::default()
+                })
+            }
+            _ => None,
         };
 
         let response = protos::GetRandomStreamResponse {
-            stream: Some(stream),
+            stream,
             ..Default::default()
         };
 
