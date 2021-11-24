@@ -80,14 +80,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 let db_url = opts.database_url.clone();
                 let twitch_service: MyTwitchRouletteService = MyTwitchRouletteService::new(db_url).await?;
 
-                let service = tonic_reflection::server::Builder::configure()
-                    .register_encoded_file_descriptor_set(protos::FILE_DESCRIPTOR_SET)
-                    .build()
-                    .unwrap();
-
                 Server::builder()
-                    .add_service(service)
-                    .add_service(TwitchRouletteServiceServer::new(twitch_service))
+                    .accept_http1(true)
+                    .add_service(tonic_web::enable(TwitchRouletteServiceServer::new(twitch_service)))
                     .serve(address.parse()?)
                     .await?;
 

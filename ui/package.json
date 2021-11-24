@@ -1,0 +1,51 @@
+{
+  "name": "twitchroulette",
+  "version": "1.0.0",
+  "description": "",
+  "main": "webpack.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "npx webpack serve -c webpack.config.dev.js",
+    "dev": "npx webpack -c webpack.config.prod.js",
+    "prod": "npx webpack -c webpack.config.dev.js"
+  },
+  "author": "",
+  "devDependencies": {
+    "@tailwindcss/aspect-ratio": "^0.3.0",
+    "@tailwindcss/forms": "^0.3.4",
+    "@tailwindcss/typography": "^0.4.1",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
+    "autoprefixer": "^10.4.0",
+    "css-loader": "^6.5.1",
+    "eslint": "^8.3.0",
+    "eslint-config-airbnb": "^19.0.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.25.3",
+    "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-react": "^7.27.1",
+    "eslint-plugin-react-hooks": "^4.3.0",
+    "html-webpack-plugin": "^5.5.0",
+    "mini-css-extract-plugin": "^2.4.5",
+    "postcss": "^8.3.11",
+    "postcss-loader": "^6.2.0",
+    "prettier": "^2.4.1",
+    "style-loader": "^3.3.1",
+    "tailwindcss": "^2.2.19",
+    "ts-loader": "^9.2.6",
+    "ts-protoc-gen": "^0.15.1-pre.a71b34e",
+    "typescript": "^4.5.2",
+    "webpack": "^5.64.2",
+    "webpack-cli": "^4.9.1",
+    "webpack-dev-server": "^4.5.0",
+    "webpack-merge": "^5.8.0"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.4.2",
+    "@heroicons/react": "^1.0.5",
+    "@improbable-eng/grpc-web": "^0.15.0",
+    "preact": "^10.5.15",
+    "wouter-preact": "^2.8.0-alpha.2"
+  }
+}

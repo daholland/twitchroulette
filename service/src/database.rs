@@ -197,79 +197,78 @@ pub async fn insert_stream(pool: &PgPool, stream: Stream) -> Result<()> {
 }
 
 pub async fn get_stream_from_id(pool: &PgPool, id: i64) -> Result<Stream> {
-    let stream = sqlx::query(
+    dbg!(&id);
+
+    let row = sqlx::query(
         r#"
-    select
-        streams.*,
-        games.name as game_name,
-        games.display as game_display,
-        games.boxart as game_boxart,
-        broadcasters.id as broadcaster_id,
-        broadcasters.login as broadcaster_login,
-        broadcasters.display_name as broadcaster_display_name,
-        broadcasters.profile_image as broadcaster_profile_image,
-        broadcasters.color as broadcaster_color
-    from streams
-    inner join
-        games
-    on
-        streams.game = games.id
-    inner join
-        broadcasters
-    on
-        streams.broadcaster = broadcasters.id
-    where
-        streams.id = ?;
-    "#,
+            select
+                streams.*,
+                games.name as game_name,
+                games.display as game_display,
+                games.boxart as game_boxart,
+                broadcasters.id as broadcaster_id,
+                broadcasters.login as broadcaster_login,
+                broadcasters.display_name as broadcaster_display_name,
+                broadcasters.profile_image as broadcaster_profile_image,
+                broadcasters.color as broadcaster_color
+            from streams
+            inner join
+                games
+            on
+                streams.game = games.id
+            inner join
+                broadcasters
+            on
+                streams.broadcaster = broadcasters.id
+            where
+                streams.id = $1;
+       "#,
     )
     .bind(id)
-    .map(|row: PgRow| {
-        let game_name: &str = row.get("game_name");
-        let game_display: &str = row.get("game_dsplay");
-        let game_id: i64 = row.get("game");
-
-        let game = Game {
-            id: game_id,
-            name: game_name.to_string(),
-            display: game_display.to_string(),
-            boxart: None,
-        };
-
-        dbg!(&game);
-
-        let broadcaster_id: i64 = row.get("broadcaster_id");
-        let broadcaster_login: &str = row.get("broadcaster_login");
-        let broadcaster_display_name: &str = row.get("broadcaster_display_name");
-        let broadcaster_profile_image: &str = row.get("broadcaster_profile_image");
-
-        let broadcaster = Broadcaster {
-            id: broadcaster_id,
-            login: broadcaster_login.to_string(),
-            display_name: broadcaster_display_name.to_string(),
-            profile_image: Some(broadcaster_profile_image.to_string()),
-            color: None,
-        };
-
-        dbg!(&broadcaster);
-
-        let id: i64 = row.get("id");
-        let title: &str = row.get("title");
-        let preview_image: &str = row.get("preview_image");
-
-        let stream = Stream {
-            id,
-            title: Some(title.to_string()),
-            preview_image: Some(preview_image.to_string()),
-            tags: vec![],
-            stream_type: None,
-            broadcaster,
-            game,
-        };
-
-        return stream;
-    })
     .fetch_one(pool)
     .await?;
+
+    let game_name: &str = row.get("game_name");
+    let game_display: &str = row.get("game_display");
+    let game_id: i64 = row.get("game");
+
+    let game = Game {
+        id: game_id,
+        name: game_name.to_string(),
+        display: game_display.to_string(),
+        boxart: None,
+    };
+
+    dbg!(&game);
+
+    let broadcaster_id: i64 = row.get("broadcaster_id");
+    let broadcaster_login: &str = row.get("broadcaster_login");
+    let broadcaster_display_name: &str = row.get("broadcaster_display_name");
+    let broadcaster_profile_image: &str = row.get("broadcaster_profile_image");
+
+    let broadcaster = Broadcaster {
+        id: broadcaster_id,
+        login: broadcaster_login.to_string(),
+        display_name: broadcaster_display_name.to_string(),
+        profile_image: Some(broadcaster_profile_image.to_string()),
+        color: None,
+    };
+
+    dbg!(&broadcaster);
+
+    let id: i64 = row.get("id");
+    let title: &str = row.get("title");
+    let preview_image: &str = row.get("preview_image");
+
+    let stream = Stream {
+        id,
+        title: Some(title.to_string()),
+        preview_image: Some(preview_image.to_string()),
+        tags: vec![],
+        stream_type: None,
+        broadcaster,
+        game,
+    };
 
     dbg!(&stream);
 
