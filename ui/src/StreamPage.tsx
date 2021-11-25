@@ -14,6 +14,7 @@ declare global {
 const StreamPage: FunctionComponent<{ id: string }> = ({ id }) => {
   const [_, setLocation] = useLocation();
   const [embed, setEmbed] = useState<any>(null);
+  const firstUpdate = useRef(true);
   const [currentId, setCurrentId] = useState(id);
 
   const rPressed: boolean = useKeyPress('r');
@@ -34,11 +35,15 @@ const StreamPage: FunctionComponent<{ id: string }> = ({ id }) => {
   };
 
   useEffect(() => {
-    async function handleKeyPress() {
-      await spin('https://api.twitchroulette.net', [], []);
-    }
+    if (firstUpdate.current) {
+      firstUpdate.current = false;
+    } else {
+      async function handleKeyPress() {
+        await spin('https://api.twitchroulette.net', [], []);
+      }
 
-    handleKeyPress();
+      handleKeyPress();
+    }
   }, [rPressed]);
 
   useEffect(() => {
