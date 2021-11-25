@@ -14,6 +14,8 @@ declare global {
 const StreamPage: FunctionComponent<{ id: string }> = ({ id }) => {
   const [_, setLocation] = useLocation();
   const [embed, setEmbed] = useState<any>(null);
+  const [currentId, setCurrentId] = useState(id);
+
   const rPressed: boolean = useKeyPress('r');
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,10 +49,15 @@ const StreamPage: FunctionComponent<{ id: string }> = ({ id }) => {
         channel: id,
       });
 
+      setCurrentId(id);
       setEmbed(newEmbed);
     } else {
-      const player = embed.getPlayer();
-      player.setChannel(id);
+      if (currentId !== id) {
+        setCurrentId(id);
+
+        const player = embed.getPlayer();
+        player.setChannel(id);
+      }
     }
   }, [containerRef, id]);
 
